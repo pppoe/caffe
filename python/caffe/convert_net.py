@@ -236,9 +236,9 @@ class CudaConvNetReader(object):
         assert len(layer['groups']) == 1
         assert layer['filters'] % layer['groups'][0] == 0
 
-        newlayer = {'type': caffe_pb2.V1LayerParameter.CONVOLUTION,
+        newlayer = {'type': caffe_pb2.V1LayerParameter.LOCAL,
                     'name': layer['name'],
-                    'convolution_param' :
+                    'local_param' :
                         {
                             'num_output': layer['filters'],
                             'weight_filler': {'type': 'gaussian',
@@ -247,7 +247,7 @@ class CudaConvNetReader(object):
                                             'value': layer['initB']},
                             'pad': -layer['padding'][0],
                             'kernel_size': layer['filterSize'][0],
-                            'group': layer['groups'][0],
+                            'bias_term' : True,
                             'stride': layer['stride'][0],
                         }
                     }
@@ -258,13 +258,23 @@ class CudaConvNetReader(object):
             # want (nfilters, channels/group, height, width)
 
             weights = layer['weights'][0].T
-            weights = weights.reshape(layer['filters'],
-                                      layer['channels'][0]/layer['groups'][0],
-                                      layer['filterSize'][0],
-                                      layer['filterSize'][0])
+            M = layer['filters']
+            K = layer['channels'][0]/layer['groups'][0]*layer['filterSize'][0]*layer['filterSize'][0]
+            N = layer['modules']
+            #for k in layer.keys():
+                #if k != 'inputLayers':
+                    #print "Key: {0}".format(k)
+                    #print layer[k]
+            #print weights.shape
+            #print layer['filters']
+            #print layer['filterSize']
+            #print layer['channels']
+            #print layer['outputs']
+            weights = weights.reshape(M, 1, K, N)
 
             biases = layer['biases'].flatten()
-            biases = biases.reshape(1, 1, 1, len(biases))
+            assert(len(biases) == M*N)
+            biases = biases.reshape(1, 1, M, N)
 
             weightsblob = caffe.convert.array_to_blobproto(weights)
             biasesblob = caffe.convert.array_to_blobproto(biases)
