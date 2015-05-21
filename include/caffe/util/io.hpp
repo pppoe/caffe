@@ -154,6 +154,9 @@ template <typename Dtype>
 void hdf5_save_nd_dataset(
     const hid_t file_id, const string& dataset_name, const Blob<Dtype>& blob);
 
+template <typename Dtype>
+bool ReadImageToBlob(const cv::Mat &cv_img_origin, Blob<Dtype>* blob);
+
 }  // namespace caffe
 
 #endif   // CAFFE_UTIL_IO_H_

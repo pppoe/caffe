@@ -261,10 +261,10 @@ class CudaConvNetReader(object):
             M = layer['filters']
             K = layer['channels'][0]/layer['groups'][0]*layer['filterSize'][0]*layer['filterSize'][0]
             N = layer['modules']
-            #for k in layer.keys():
-                #if k != 'inputLayers':
-                    #print "Key: {0}".format(k)
-                    #print layer[k]
+            for k in layer.keys():
+                if k != 'inputLayers':
+                    print "Key: {0}".format(k)
+                    print layer[k]
             #print weights.shape
             #print layer['filters']
             #print layer['filterSize']

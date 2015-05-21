@@ -21,6 +21,10 @@ void LocalLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bottom,
   channels_ = bottom[0]->channels();
   height_ = bottom[0]->height();
   width_ = bottom[0]->width();
+
+  std::cout << kernel_size_ << " " << stride_ << " " << pad_ << " "
+      << num_ << " " << channels_ << " " << height_ << " " << width_ << std::endl;
+
   num_output_ = this->layer_param_.local_param().num_output();
 
   height_out_ = (height_ + 2 * pad_ - kernel_size_) / stride_ + 1;
@@ -207,5 +211,6 @@ STUB_GPU(LocalLayer);
 #endif
 
 INSTANTIATE_CLASS(LocalLayer);
+REGISTER_LAYER_CLASS(Local);
 
 }  // namespace caffe

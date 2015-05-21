@@ -91,7 +91,7 @@ void UpgradeV0PaddingLayers(const NetParameter& param,
         // layer or a pooling layer and takes only one input.  Also check that
         // the padding layer input has only one input and one output.  Other
         // cases have undefined behavior in Caffe.
-        CHECK((layer_param.type() == "conv") || (layer_param.type() == "pool"))
+        CHECK((layer_param.type() == "conv") || (layer_param.type() == "pool") || (layer_param.type() == "local"))
             << "Padding layer input to "
             "non-convolutional / non-pooling layer type "
             << layer_param.type();
@@ -147,6 +147,9 @@ bool UpgradeV0LayerParameter(const V1LayerParameter& v0_layer_connection,
       if (type == "conv") {
         layer_param->mutable_convolution_param()->set_num_output(
             v0_layer_param.num_output());
+      } else if (type == "local") {
+        layer_param->mutable_local_param()->set_num_output(
+            v0_layer_param.num_output());
       } else if (type == "innerproduct") {
         layer_param->mutable_inner_product_param()->set_num_output(
             v0_layer_param.num_output());
@@ -158,6 +161,9 @@ bool UpgradeV0LayerParameter(const V1LayerParameter& v0_layer_connection,
     if (v0_layer_param.has_biasterm()) {
       if (type == "conv") {
         layer_param->mutable_convolution_param()->set_bias_term(
+            v0_layer_param.biasterm());
+      } else if (type == "local") {
+        layer_param->mutable_local_param()->set_bias_term(
             v0_layer_param.biasterm());
       } else if (type == "innerproduct") {
         layer_param->mutable_inner_product_param()->set_bias_term(
@@ -171,6 +177,9 @@ bool UpgradeV0LayerParameter(const V1LayerParameter& v0_layer_connection,
       if (type == "conv") {
         layer_param->mutable_convolution_param()->
             mutable_weight_filler()->CopyFrom(v0_layer_param.weight_filler());
+      } else if (type == "local") {
+        layer_param->mutable_local_param()->
+            mutable_weight_filler()->CopyFrom(v0_layer_param.weight_filler());
       } else if (type == "innerproduct") {
         layer_param->mutable_inner_product_param()->
             mutable_weight_filler()->CopyFrom(v0_layer_param.weight_filler());
@@ -183,6 +192,9 @@ bool UpgradeV0LayerParameter(const V1LayerParameter& v0_layer_connection,
       if (type == "conv") {
         layer_param->mutable_convolution_param()->
             mutable_bias_filler()->CopyFrom(v0_layer_param.bias_filler());
+      } else if (type == "local") {
+        layer_param->mutable_local_param()->
+            mutable_bias_filler()->CopyFrom(v0_layer_param.bias_filler());
       } else if (type == "innerproduct") {
         layer_param->mutable_inner_product_param()->
             mutable_bias_filler()->CopyFrom(v0_layer_param.bias_filler());
@@ -194,6 +206,8 @@ bool UpgradeV0LayerParameter(const V1LayerParameter& v0_layer_connection,
     if (v0_layer_param.has_pad()) {
       if (type == "conv") {
         layer_param->mutable_convolution_param()->set_pad(v0_layer_param.pad());
+      } else if (type == "local") {
+        layer_param->mutable_local_param()->set_pad(v0_layer_param.pad());
       } else if (type == "pool") {
         layer_param->mutable_pooling_param()->set_pad(v0_layer_param.pad());
       } else {
@@ -204,6 +218,9 @@ bool UpgradeV0LayerParameter(const V1LayerParameter& v0_layer_connection,
     if (v0_layer_param.has_kernelsize()) {
       if (type == "conv") {
         layer_param->mutable_convolution_param()->set_kernel_size(
+            v0_layer_param.kernelsize());
+      } else if (type == "local") {
+        layer_param->mutable_local_param()->set_kernel_size(
             v0_layer_param.kernelsize());
       } else if (type == "pool") {
         layer_param->mutable_pooling_param()->set_kernel_size(
@@ -225,6 +242,9 @@ bool UpgradeV0LayerParameter(const V1LayerParameter& v0_layer_connection,
     if (v0_layer_param.has_stride()) {
       if (type == "conv") {
         layer_param->mutable_convolution_param()->set_stride(
+            v0_layer_param.stride());
+      } else if (type == "local") {
+        layer_param->mutable_local_param()->set_stride(
             v0_layer_param.stride());
       } else if (type == "pool") {
         layer_param->mutable_pooling_param()->set_stride(
@@ -476,6 +496,8 @@ V1LayerParameter_LayerType UpgradeV0LayerType(const string& type) {
     return V1LayerParameter_LayerType_CONCAT;
   } else if (type == "conv") {
     return V1LayerParameter_LayerType_CONVOLUTION;
+  } else if (type == "local") {
+    return V1LayerParameter_LayerType_LOCAL;
   } else if (type == "data") {
     return V1LayerParameter_LayerType_DATA;
   } else if (type == "dropout") {
@@ -728,6 +750,10 @@ bool UpgradeV1LayerParameter(const V1LayerParameter& v1_layer_param,
     layer_param->mutable_convolution_param()->CopyFrom(
         v1_layer_param.convolution_param());
   }
+  if (v1_layer_param.has_local_param()) {
+    layer_param->mutable_local_param()->CopyFrom(
+        v1_layer_param.local_param());
+  }
   if (v1_layer_param.has_data_param()) {
     layer_param->mutable_data_param()->CopyFrom(
         v1_layer_param.data_param());
@@ -865,6 +891,8 @@ const char* UpgradeV1LayerType(const V1LayerParameter_LayerType type) {
     return "EuclideanLoss";
   case V1LayerParameter_LayerType_ELTWISE:
     return "Eltwise";
+  case V1LayerParameter_LayerType_LOCAL:
+    return "Local";
   case V1LayerParameter_LayerType_EXP:
     return "Exp";
   case V1LayerParameter_LayerType_FLATTEN:

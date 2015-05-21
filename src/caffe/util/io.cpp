@@ -303,4 +303,28 @@ void hdf5_save_nd_dataset<double>(
   CHECK_GE(status, 0) << "Failed to make double dataset " << dataset_name;
 }
 
+template <typename Dtype>
+bool ReadImageToBlob(const cv::Mat &cv_img_origin, Blob<Dtype>* blob) {
+  int width = blob->width();
+  int height = blob->height();
+  cv::Mat cv_img;
+  if (height > 0 && width > 0) {
+    cv::resize(cv_img_origin, cv_img, cv::Size(height, width), cv::INTER_LANCZOS4);
+  } else {
+      cv_img = cv_img_origin;
+  }
+  int glb_idx = 0;
+  Dtype* p_data = blob->mutable_cpu_data();
+  for (int c = 0; c < 3; ++c) {
+    for (int h = 0; h < cv_img.rows; ++h) {
+      for (int w = 0; w < cv_img.cols; ++w) {
+          p_data[glb_idx++] = static_cast<float>(cv_img.at<cv::Vec3b>(h, w)[2-c]);
+      }
+    }
+  }
+  return true;
+}
+
+template bool ReadImageToBlob<float>(const cv::Mat &cv_img_origin, Blob<float>* blob);
+
 }  // namespace caffe
